@@ -1,14 +1,15 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
 
 // Inisialisasi aplikasi Express
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
 // Variabel untuk menyimpan semua chat
 let chat = [];
+
+// Middleware untuk menangani JSON
+app.use(express.json());
 
 // Route untuk menyajikan HTML langsung dari server
 app.get('/', (req, res) => {
@@ -33,63 +34,65 @@ app.get('/', (req, res) => {
         <input type="text" id="message" placeholder="Type your message">
         <button id="send">Send</button>
 
-        <script src="/socket.io/socket.io.js"></script>
         <script>
-            const socket = io();
+            // Fungsi untuk mendapatkan chat history
+            function fetchChat() {
+                fetch('/chat')
+                    .then(response => response.json())
+                    .then(data => {
+                        const chatDiv = document.getElementById('chat');
+                        chatDiv.innerHTML = ''; // Kosongkan chat sebelum diisi
+                        data.forEach((msg) => {
+                            const p = document.createElement('p');
+                            p.textContent = msg;
+                            chatDiv.appendChild(p);
+                        });
+                    });
+            }
 
-            // Menampilkan riwayat chat
-            socket.on('chat history', (chatHistory) => {
-                const chatDiv = document.getElementById('chat');
-                chatHistory.forEach((msg) => {
-                    const p = document.createElement('p');
-                    p.textContent = msg;
-                    chatDiv.appendChild(p);
-                });
-            });
-
-            // Menampilkan pesan baru
-            socket.on('new message', (message) => {
-                const chatDiv = document.getElementById('chat');
-                const p = document.createElement('p');
-                p.textContent = message;
-                chatDiv.appendChild(p);
-            });
+            // Mengambil chat setiap 2 detik
+            setInterval(fetchChat, 2000);
 
             // Mengirim pesan baru
             document.getElementById('send').addEventListener('click', () => {
                 const messageInput = document.getElementById('message');
                 const message = messageInput.value;
                 if (message) {
-                    socket.emit('new message', message);
-                    messageInput.value = '';
+                    fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    }).then(() => {
+                        messageInput.value = ''; // Kosongkan input setelah mengirim pesan
+                        fetchChat(); // Update chat segera setelah mengirim pesan
+                    });
                 }
             });
+
+            // Muat chat history saat halaman pertama kali dimuat
+            fetchChat();
         </script>
     </body>
     </html>
     `);
 });
 
-// Ketika client terhubung
-io.on('connection', (socket) => {
-    console.log('User connected');
+// Route untuk mendapatkan riwayat chat
+app.get('/chat', (req, res) => {
+    res.json(chat);
+});
 
-    // Kirim riwayat chat saat user bergabung
-    socket.emit('chat history', chat);
-
-    // Terima pesan baru dari client
-    socket.on('new message', (message) => {
-        // Simpan pesan ke variabel chat
-        chat.push(message);
-
-        // Broadcast pesan ke semua client
-        io.emit('new message', message);
-    });
-
-    // Ketika client terputus
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+// Route untuk menerima pesan baru
+app.post('/chat', (req, res) => {
+    const { message } = req.body;
+    if (message) {
+        chat.push(message); // Simpan pesan ke variabel chat
+        res.status(201).send(); // Kirim respon sukses
+    } else {
+        res.status(400).send('Message is required');
+    }
 });
 
 // Jalankan server
