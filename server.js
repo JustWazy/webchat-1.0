@@ -1,39 +1,32 @@
 const express = require('express');
 const http = require('http');
-
-// Inisialisasi aplikasi Express
+const express = require('express');
 const app = express();
-const server = http.createServer(app);
 
-// Variabel untuk menyimpan semua chat
-let chat = [];
+// Port di mana server akan berjalan
+const PORT = process.env.PORT || 3000;
 
-// Middleware untuk menangani JSON
+// Middleware untuk parsing JSON
 app.use(express.json());
 
-// Route untuk menyajikan HTML langsung dari server
+// Route dasar di root URL
 app.get('/', (req, res) => {
-    res.send(`PIRDC`);
+  res.send('Hello, World!');
 });
 
-// Route untuk mendapatkan riwayat chat
-app.get('/chat', (req, res) => {
-    res.json(chat);
+// Route contoh lainnya
+app.get('/about', (req, res) => {
+  res.send('Ini halaman tentang.');
 });
 
-// Route untuk menerima pesan baru
-app.post('/chat', (req, res) => {
-    const { message } = req.body;
-    if (message) {
-        chat.push(message); // Simpan pesan ke variabel chat
-        res.status(201).send(); // Kirim respon sukses
-    } else {
-        res.status(400).send('Message is required');
-    }
+// Route POST untuk menerima data
+app.post('/submit', (req, res) => {
+  const data = req.body;
+  res.send(`Data diterima: ${JSON.stringify(data)}`);
 });
 
-// Jalankan server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Jalankan server di port yang ditentukan
+app.listen(PORT, () => {
+  console.log(`Server berjalan di http://localhost:${PORT}`);
 });
+
