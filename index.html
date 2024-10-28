@@ -12,6 +12,7 @@
     #form { display: flex; max-width: 300px; width: 100%; }
     #input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px 0 0 5px; }
     button { padding: 10px; border: none; background-color: #007BFF; color: #fff; border-radius: 0 5px 5px 0; cursor: pointer; }
+    #error { color: red; margin-top: 10px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -21,15 +22,32 @@
     <input id="input" autocomplete="off" placeholder="Type your message here" />
     <button>Send</button>
   </form>
+  <p id="error" style="display: none;">Unable to connect to the server. Please try again later.</p> <!-- Notifikasi Error -->
 
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
-    // Inisialisasi koneksi ke backend di alamat penny.hidencloud.com:25575
-    const socket = io('http://penny.hidencloud.com:25575');
+    const socket = io('http://penny.hidencloud.com:25575', {
+      reconnectionAttempts: 3, // Membatasi jumlah percobaan koneksi ulang
+      timeout: 5000 // Batas waktu koneksi
+    });
 
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
+    const error = document.getElementById('error');
+
+    // Menampilkan pesan error jika gagal terhubung
+    socket.on('connect_error', (err) => {
+      console.error('Connection Error:', err);
+      error.style.display = 'block';
+      error.textContent = 'Unable to connect to the server. Please try again later.';
+    });
+
+    // Sembunyikan error jika koneksi berhasil
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      error.style.display = 'none';
+    });
 
     // Kirim pesan ke server ketika form dikirim
     form.addEventListener('submit', function (e) {
@@ -47,7 +65,13 @@
       messages.appendChild(item);
       window.scrollTo(0, document.body.scrollHeight); // Scroll ke bawah
     });
+
+    // Tampilkan notifikasi jika koneksi terputus
+    socket.on('disconnect', () => {
+      console.warn('Disconnected from server');
+      error.style.display = 'block';
+      error.textContent = 'Disconnected from server. Trying to reconnect...';
+    });
   </script>
 </body>
 </html>
-
