@@ -6,7 +6,6 @@ const fs = require('fs');
 app.use(cors()); 
 app.use(express.json()); 
 
-const DB_FILE = 'db.json';
 const CHAT_FILE = 'chat.json';
 
 // Fungsi untuk menyimpan chat
