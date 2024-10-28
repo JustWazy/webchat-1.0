@@ -1,77 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Web Chat</title>
-  <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
-    h1 { font-size: 24px; }
-    #messages { list-style-type: none; padding: 0; max-width: 300px; width: 100%; }
-    #messages li { padding: 8px; margin-bottom: 10px; border-radius: 5px; background-color: #f1f1f1; }
-    #form { display: flex; max-width: 300px; width: 100%; }
-    #input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px 0 0 5px; }
-    button { padding: 10px; border: none; background-color: #007BFF; color: #fff; border-radius: 0 5px 5px 0; cursor: pointer; }
-    #error { color: red; margin-top: 10px; font-size: 14px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login dan Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        #chatContainer { margin-top: 20px; }
+        #chatLog { border: 1px solid #ccc; height: 200px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+        .chat-item { margin: 5px 0; }
+    </style>
 </head>
 <body>
-  <h1>Web Chat</h1>
-  <ul id="messages"></ul>
-  <form id="form" action="">
-    <input id="input" autocomplete="off" placeholder="Type your message here" />
-    <button>Send</button>
-  </form>
-  <p id="error" style="display: none;">Unable to connect to the server. Please try again later.</p> <!-- Notifikasi Error -->
 
-  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-  <script>
-    const socket = io('penny.hidencloud.com:25575', {
-      reconnectionAttempts: 3, // Membatasi jumlah percobaan koneksi ulang
-      timeout: 5000 // Batas waktu koneksi
+<div class="container">
+    <h1>Login</h1>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button id="loginBtn">Login</button>
+
+    <div id="chatContainer" style="display: none;">
+        <h2>Chat</h2>
+        <div id="chatLog"></div>
+        <input type="text" id="chatInput" placeholder="Type your message..." required>
+        <button id="sendChatBtn">Send</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://penny.hidencloud.com:25575/api';
+
+    // Fungsi untuk login
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch(`${API_URL}/accounts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (response.status === 201) {
+                alert('Login berhasil!');
+                document.getElementById('chatContainer').style.display = 'block';
+                loadChat(); // Memuat chat setelah login berhasil
+            } else if (response.status === 409) {
+                alert('Username sudah ada, silakan coba login dengan username lain.');
+            } else {
+                alert('Terjadi kesalahan, silakan coba lagi.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan, silakan coba lagi.');
+        }
     });
 
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const messages = document.getElementById('messages');
-    const error = document.getElementById('error');
+    // Fungsi untuk mengirim chat
+    document.getElementById('sendChatBtn').addEventListener('click', async () => {
+        const username = document.getElementById('username').value;
+        const chat = document.getElementById('chatInput').value;
 
-    // Menampilkan pesan error jika gagal terhubung
-    socket.on('connect_error', (err) => {
-      console.error('Connection Error:', err);
-      error.style.display = 'block';
-      error.textContent = 'Unable to connect to the server. Please try again later.';
+        try {
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user: username, chat })
+            });
+
+            if (response.status === 201) {
+                document.getElementById('chatInput').value = '';
+                loadChat(); // Memuat ulang chat setelah mengirim pesan
+            } else {
+                alert('Gagal mengirim chat, silakan coba lagi.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Gagal mengirim chat, silakan coba lagi.');
+        }
     });
 
-    // Sembunyikan error jika koneksi berhasil
-    socket.on('connect', () => {
-      console.log('Connected to server');
-      error.style.display = 'none';
-    });
+    // Fungsi untuk memuat chat
+    async function loadChat() {
+        try {
+            const response = await fetch(`${API_URL}/chat`);
+            const data = await response.json();
+            const chatLog = document.getElementById('chatLog');
+            chatLog.innerHTML = '';
+            data.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+                chatItem.textContent = chat;
+                chatLog.appendChild(chatItem);
+            });
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Gagal memuat chat, silakan coba lagi.');
+        }
+    }
+</script>
 
-    // Kirim pesan ke server ketika form dikirim
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', input.value); // Emit pesan ke server
-        input.value = ''; // Kosongkan input setelah pesan terkirim
-      }
-    });
-
-    // Terima pesan dari server dan tampilkan di list
-    socket.on('chat message', function (msg) {
-      const item = document.createElement('li');
-      item.textContent = msg;
-      messages.appendChild(item);
-      window.scrollTo(0, document.body.scrollHeight); // Scroll ke bawah
-    });
-
-    // Tampilkan notifikasi jika koneksi terputus
-    socket.on('disconnect', () => {
-      console.warn('Disconnected from server');
-      error.style.display = 'block';
-      error.textContent = 'Disconnected from server. Trying to reconnect...';
-    });
-  </script>
 </body>
 </html>
