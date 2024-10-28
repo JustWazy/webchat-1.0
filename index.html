@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login dan Chat</title>
+    <title>Chat App</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -17,55 +17,41 @@
 <body>
 
 <div class="container">
-    <h1>Login</h1>
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button id="loginBtn">Login</button>
+    <h1>Chat App</h1>
+    <input type="text" id="username" placeholder="Masukkan nama Anda" required>
+    <button id="startChatBtn">Mulai Chat</button>
 
     <div id="chatContainer" style="display: none;">
         <h2>Chat</h2>
         <div id="chatLog"></div>
-        <input type="text" id="chatInput" placeholder="Type your message..." required>
-        <button id="sendChatBtn">Send</button>
+        <input type="text" id="chatInput" placeholder="Ketik pesan Anda..." required>
+        <button id="sendChatBtn">Kirim</button>
     </div>
 </div>
 
 <script>
-    const API_URL = 'penny.hidencloud.com:25575/api';
+    const API_URL = 'http://penny.hidencloud.com:25575/api';
+    let username = '';
 
-    // Fungsi untuk login
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        try {
-            const response = await fetch(`${API_URL}/accounts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (response.status === 201) {
-                alert('Login berhasil!');
-                document.getElementById('chatContainer').style.display = 'block';
-                loadChat(); // Memuat chat setelah login berhasil
-            } else if (response.status === 409) {
-                alert('Username sudah ada, silakan coba login dengan username lain.');
-            } else {
-                alert('Terjadi kesalahan, silakan coba lagi.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan, silakan coba lagi.');
+    // Fungsi untuk memulai chat
+    document.getElementById('startChatBtn').addEventListener('click', () => {
+        username = document.getElementById('username').value;
+        if (!username) {
+            alert('Silakan masukkan nama Anda.');
+            return;
         }
+        document.getElementById('chatContainer').style.display = 'block';
+        loadChat(); // Memuat chat saat masuk
     });
 
     // Fungsi untuk mengirim chat
     document.getElementById('sendChatBtn').addEventListener('click', async () => {
-        const username = document.getElementById('username').value;
         const chat = document.getElementById('chatInput').value;
+
+        if (!chat) {
+            alert('Pesan tidak boleh kosong.');
+            return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/chat`, {
@@ -110,3 +96,4 @@
 
 </body>
 </html>
+
