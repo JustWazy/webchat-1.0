@@ -1,2 +1,2 @@
-# webchat-1.0
-I want to learn about real time chat website, this is my first project, please give me some suggestion if it din't work...
+# Simple Webchat
+Web chat sederhana yang dibuat menggunakan html,css,js dengan implementasi api dari express js tanpa ssl pada bagian backend nya, jangan ragu untuk memberikan saran jika dirasa adakekurangan pada codingan saya karna saya juga masih dalam tahap pembelajaran web development, terimakasih sudah mampir dan sampai jumpa di commit berikutnya!
