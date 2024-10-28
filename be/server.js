@@ -3,13 +3,13 @@ const cors = require('cors');
 const app = express();
 const fs = require('fs');
 
-app.use(cors()); // Mengizinkan semua permintaan dari sumber lain
-app.use(express.json()); // Untuk parsing application/json
+app.use(cors()); 
+app.use(express.json()); 
 
 const DB_FILE = 'db.json';
 const CHAT_FILE = 'chat.json';
 
-// Rute untuk menyimpan chat
+// Fungsi untuk menyimpan chat
 app.post('/api/chat', (req, res) => {
     const { user, chat } = req.body;
 
@@ -31,7 +31,7 @@ app.post('/api/chat', (req, res) => {
     });
 });
 
-// Rute untuk mengambil chat
+// Fungsi untuk mengambil chat
 app.get('/api/chat', (req, res) => {
     fs.readFile(CHAT_FILE, 'utf8', (err, data) => {
         if (err) return res.status(500).json({ message: 'Gagal membaca file chat' });
@@ -41,7 +41,7 @@ app.get('/api/chat', (req, res) => {
     });
 });
 
-// Menjalankan server
+// Set port nya disini
 const PORT = 25575;
 app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
