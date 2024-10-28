@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        #chatContainer { margin-top: 20px; }
+        #chatLog { border: 1px solid #ccc; height: 200px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+        .chat-item { margin: 5px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Chat App</h1>
+    <input type="text" id="username" placeholder="Masukkan nama Anda" required>
+    <button id="startChatBtn">Mulai Chat</button>
+
+    <div id="chatContainer" style="display: none;">
+        <h2>Chat</h2>
+        <div id="chatLog"></div>
+        <input type="text" id="chatInput" placeholder="Ketik pesan Anda..." required>
+        <button id="sendChatBtn">Kirim</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://penny.hidencloud.com:25575/api';
+    let username = '';
+
+    // Fungsi untuk memulai chat
+    document.getElementById('startChatBtn').addEventListener('click', () => {
+        username = document.getElementById('username').value;
+        if (!username) {
+            alert('Silakan masukkan nama Anda.');
+            return;
+        }
+        document.getElementById('chatContainer').style.display = 'block';
+        loadChat(); // Memuat chat saat masuk
+    });
+
+    // Fungsi untuk mengirim chat
+    document.getElementById('sendChatBtn').addEventListener('click', async () => {
+        const chat = document.getElementById('chatInput').value;
+
+        if (!chat) {
+            alert('Pesan tidak boleh kosong.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user: username, chat })
+            });
+
+            if (response.ok) {
+                document.getElementById('chatInput').value = '';
+                loadChat(); // Memuat ulang chat setelah mengirim pesan
+            } else {
+                const errorData = await response.json();
+                console.error('Error response:', errorData);
+                alert(`Gagal mengirim chat: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Gagal mengirim chat, silakan coba lagi.');
+        }
+    });
+
+    // Fungsi untuk memuat chat
+    async function loadChat() {
+        try {
+            console.log('Fetching chat data...');
+            const response = await fetch(`${API_URL}/chat`);
+            console.log('Response:', response);
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            const chatLog = document.getElementById('chatLog');
+            chatLog.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                chatLog.innerHTML = '<div class="chat-item">Belum ada chat.</div>';
+                return;
+            }
+
+            data.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+                chatItem.textContent = chat;
+                chatLog.appendChild(chatItem);
+            });
+        } catch (error) {
+            console.error('Error fetching chat:', error);
+            alert('Gagal memuat chat, silakan coba lagi.');
+        }
+    }
+</script>
+
+</body>
+</html>
